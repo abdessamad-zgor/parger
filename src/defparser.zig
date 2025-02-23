@@ -24,7 +24,7 @@ pub const DefParser = struct {
     fn init(allocator: Allocator) Self {
         const tokenizer = Tokenizer.init(allocator, @constCast(&[_]Pattern{ Pattern.init(.RBrace, .rbrace, .one), Pattern.init(.LBrace, .lbrace, .one), Pattern.init(.Dot, .dot, .one), Pattern.init(.Comma, .comma, .one), Pattern.init(.Word, .literal, .any), Pattern.init(.Letter, .literal, .one), Pattern.init(.Dash, .dash, .one), Pattern.init(.Gt, .gt, .one), Pattern.init(.Lt, .lt, .one) }));
 
-        const grammer = Grammer.init(allocator, .Def, &[_]Rule{
+        const grammer = Grammer.init(allocator, .Def, &.{
             Rule.init(.Required, &.{ .Lt, .Word, .Gt }),
             Rule.init(.RequiredVariadic, &.{ .Lt, .Word, .Dot, .Dot, .Dot, .Gt }),
             Rule.init(.Optional, &.{ .LBrace, .Word, .RBrace }),
@@ -61,11 +61,11 @@ pub const DefParser = struct {
                 .Argument,
                 .ArgumentList,
             }),
-            Rule.init(.ArgumentList, &.{.Empty}),
+            Rule.init(.ArgumentList, &.{}),
             Rule.init(.OptionDef, &.{ .Flag, .ArgumentList }),
         });
 
-        const def_parser = Parser.init(allocator, .Def, grammer, tokenizer);
+        const def_parser = Parser.init(allocator, grammer, tokenizer);
 
         return DefParser{ .allocator = allocator, .parser = def_parser };
     }
@@ -102,14 +102,20 @@ pub const DefParser = struct {
         return lexemes.items;
     }
 
-    fn parse(self: Self, def_string: []u8) !Node {
+    fn parse(self: *Self, def_string: []u8) !Node {
         const lexemes = self.lex(def_string);
         return self.parser.parse(lexemes);
     }
 };
 
+test "lex a def" {
+    var defParser = DefParser.init(std.heap.page_allocator);
+    const lexemes = defParser.lex(@constCast("-d, --dick <size>"));
+    try std.testing.expect(lexemes.len == 15);
+}
+
 test "parse a def" {
-    const defParser = DefParser.init(std.heap.page_allocator);
+    var defParser = DefParser.init(std.heap.page_allocator);
     const parse_tree = try defParser.parse(@constCast("-d, --dick <size>"));
-    std.testing.expect(@TypeOf(parse_tree) == Node);
+    try std.testing.expect(@TypeOf(parse_tree) == Node);
 }

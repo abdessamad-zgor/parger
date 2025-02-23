@@ -49,7 +49,7 @@ const Parger = struct {
 
 
 
-    fn option(self: Self, option_string: ) *Command {
+    fn option(self: Self, option_string: []u8) *Command {
         if (self.default == null) {
             self.default = Command{.name = "", .description = "", .options = &[_]Option{Option{.short = short, .long = }}}
         }
