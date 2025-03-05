@@ -1,3 +1,6 @@
+const std = @import("std");
+const expect = std.testing.expect;
+
 const lexemem = @import("./lexeme.zig");
 const tokenm = @import("./token.zig");
 
@@ -35,6 +38,8 @@ pub const Pattern = struct {
     start: usize,
     end: usize,
 
+    // for this use case, tokens comprizing of one single type of lexeme are acceptable but subsequent implementation
+    // need to replace lexeme with regular expression
     pub fn init(ttype: TokenType, lexeme: LexemeType, quantifier: Quantifier) Self {
         return Pattern{ .lexeme = lexeme, .quantifier = quantifier, .ttype = ttype, .start = 0, .end = 0, .state = .Init };
     }
@@ -52,7 +57,7 @@ pub const Pattern = struct {
                 break :blk switch (self.quantifier) {
                     .any => PatternState{ .Intrem = 1 },
                     .one => iblk: {
-                        self.end = self.start;
+                        self.end = self.start + 1;
                         break :iblk PatternState{ .Final = 1 };
                     },
                     .number => PatternState{ .Intrem = 1 },
@@ -62,15 +67,38 @@ pub const Pattern = struct {
             .Intrem => |iq| switch (self.quantifier) {
                 .any => PatternState{ .Intrem = iq + 1 },
                 .one => self.reset(),
-                .number => |number| if (iq == number) PatternState{ .Final = number } else PatternState{ .Intrem = iq + 1 },
+                .number => |number| blk: {
+                    if (iq == number) {
+                        self.end = iq;
+                        break :blk PatternState{ .Final = number };
+                    } else {
+                        break :blk PatternState{ .Intrem = iq + 1 };
+                    }
+                },
             },
             else => .Init,
         } else switch (self.state) {
             .Intrem => switch (self.quantifier) {
-                .any => .PostFinal,
-                else => .Init,
+                .any => blk: {
+                    self.end = @intCast(index - 1);
+                    break :blk .PostFinal;
+                },
+                else => self.reset(),
             },
-            else => .Init,
+            else => self.reset(),
         };
     }
 };
+
+test "Pattern test" {
+    var word_pattern = Pattern.init(.Word, .literal, .any);
+    const lexemes: [6]LexemeType = .{ .literal, .literal, .literal, .literal, .literal, .dash };
+    for (lexemes, 0..) |lexeme, i| {
+        word_pattern.transition(lexeme, i);
+        if (i == 5) {
+            try expect(word_pattern.start == 0);
+            try expect(word_pattern.end == 4);
+            std.debug.print("start: {}, end: {} \n", .{ word_pattern.start, word_pattern.end });
+        }
+    }
+}

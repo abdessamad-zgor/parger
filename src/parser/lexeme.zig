@@ -1,4 +1,4 @@
-const LexemeType = enum {
+pub const LexemeType = enum {
     dash,
     literal,
     dot,

@@ -86,6 +86,7 @@ pub const DefParser = struct {
                 ']' => .rbrace,
                 ',' => .comma,
                 '.' => .dot,
+                ' ' => .space,
                 48...57 => .{ .literal = char },
                 65...90 => .{ .literal = char },
                 97...120 => .{ .literal = char },

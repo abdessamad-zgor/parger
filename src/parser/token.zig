@@ -95,7 +95,7 @@ pub const Tokenizer = struct {
         for (lexemes, 0..) |lexeme, i| {
             recognizedPattern = self.transition(lexeme, i);
             if (recognizedPattern) |pattern| {
-                const range = if (pattern.end == lexemes.len - 1) lexemes[pattern.start..] else lexemes[pattern.start .. pattern.end + 1];
+                const range = if (pattern.start == lexemes.len - 1) lexemes[pattern.start..] else lexemes[pattern.start..pattern.end];
                 var result_token = std.ArrayList(u8).init(self.allocator);
                 for (range) |lxm| {
                     try result_token.append(lxm.to_char());
@@ -125,4 +125,17 @@ pub const Tokenizer = struct {
 test "TokenType test" {
     try expect(TokenType.Dash.eq_symbol(SymbolType.Dash));
     try expect(!TokenType.Dash.eq_symbol(SymbolType.Dot));
+    //try expect(TokenType.Dot == TokenType.from_symbol(SymbolType.Dot).?);
+    try expect(TokenType.Dot.to_symbol_type() == SymbolType.Dot);
+}
+
+test "Tokenizer test" {
+    const tokenizer = Tokenizer.init(std.heap.page_allocator, @constCast(&[_]Pattern{ Pattern.init(.RBrace, .rbrace, .one), Pattern.init(.LBrace, .lbrace, .one), Pattern.init(.Dot, .dot, .one), Pattern.init(.Comma, .comma, .one), Pattern.init(.Word, .literal, .any), Pattern.init(.Letter, .literal, .one), Pattern.init(.Dash, .dash, .one), Pattern.init(.Gt, .gt, .one), Pattern.init(.Lt, .lt, .one) }));
+    const lexemes = &[_]Lexeme{ .dash, .{ .literal = 'd' }, .comma, .space, .dash, .dash, .{ .literal = 'd' }, .{ .literal = 'i' }, .{ .literal = 'c' }, .{ .literal = 'k' }, .space, .lt, .{ .literal = 's' }, .{ .literal = 'i' }, .{ .literal = 'z' }, .{ .literal = 'e' }, .gt };
+
+    const tokens = try tokenizer.tokenize(@constCast(lexemes));
+    //for (tokens) |token| {
+    //    std.debug.print("token = {}, value = {?s} \n", .{ token.ttype, token.value });
+    //}
+    try expect(tokens.len == 16);
 }
