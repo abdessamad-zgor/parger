@@ -37,6 +37,7 @@ pub const Pattern = struct {
     state: PatternState,
     ttype: TokenType,
     stack: ?std.ArrayList(u8),
+    allocator: ?Allocator,
     start: usize,
     end: usize,
 
@@ -47,14 +48,14 @@ pub const Pattern = struct {
         if (allocator) |_allocator| {
             stack = std.ArrayList(u8).init(_allocator);
         }
-        return Pattern{ .stack = stack, .lexeme = lexeme, .quantifier = quantifier, .ttype = ttype, .start = 0, .end = 0, .state = .Init };
+        return Pattern{ .stack = stack, .allocator = allocator, .lexeme = lexeme, .quantifier = quantifier, .ttype = ttype, .start = 0, .end = 0, .state = .Init };
     }
 
     pub fn reset(self: *Self) PatternState {
         self.start = 0;
         self.end = 0;
         if (self.stack != null) {
-            self.stack.?.shrinkAndFree(0);
+            self.stack = std.ArrayList(u8).init(self.allocator.?);
         }
         return .Init;
     }
@@ -80,6 +81,11 @@ pub const Pattern = struct {
                         self.end = self.end + 1;
                         break :iblk PatternState{ .Final = iq + 1 };
                     },
+                    .one => iblk: {
+                        self.start = index;
+                        self.end = self.start + 1;
+                        break :iblk PatternState{ .Final = 1 };
+                    },
                     else => self.reset(),
                 };
             },
@@ -101,7 +107,7 @@ pub const Pattern = struct {
         } else self.reset();
 
         if (self.ttype == .Word) {
-            std.debug.print("step {}:\n\tstate = {}, stack = {s}\n", .{ index, self.state, self.stack.?.items });
+            std.debug.print("step {}:\n\tstate = {}, stack = {s}, start = {}, end = {}\n", .{ index, self.state, self.stack.?.items, self.start, self.end });
         }
 
         if (self.state == .Final) {

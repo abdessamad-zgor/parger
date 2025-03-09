@@ -124,8 +124,7 @@ pub const Tokenizer = struct {
                 for (_tokens, 0..) |_, j| {
                     const _token = _tokens[@as(usize, _tokens.len - 1 - j)];
                     if (_ctoken.start == _token.start and _ctoken.length() > _token.length()) {
-                        tokens.shrinkAndFree(_tokens.len - j);
-                        try tokens.append(_ctoken);
+                        tokens.shrinkAndFree(_tokens.len - j - 1);
                     }
                 }
                 try tokens.append(_ctoken);
