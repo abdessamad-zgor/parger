@@ -11,14 +11,14 @@ const Node = nodem.Node;
 pub fn MergeEnums(comptime EnumA: type, comptime EnumB: type) type {
     const token_fields = blk: {
         switch (@typeInfo(EnumA)) {
-            .@"enum" => |e| break :blk e.fields,
+            .Enum => |e| break :blk e.fields,
             else => @compileError(@typeName(EnumA) ++ " must be an enum"),
         }
     };
 
     const node_fields = blk: {
         switch (@typeInfo(EnumB)) {
-            .@"enum" => |e| break :blk e.fields,
+            .Enum => |e| break :blk e.fields,
             else => @compileError(@typeName(EnumB) ++ " must be an enum"),
         }
     };
@@ -33,7 +33,7 @@ pub fn MergeEnums(comptime EnumA: type, comptime EnumB: type) type {
         fields[i] = .{ .name = f.name, .value = @intCast(f.value + i) };
     }
 
-    return @Type(.{ .@"enum" = .{
+    return @Type(.{ .Enum = .{
         .decls = &.{},
         .tag_type = i16,
         .fields = &fields,

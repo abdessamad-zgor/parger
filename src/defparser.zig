@@ -1,9 +1,9 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const parser = @import("./parser.zig");
+const parser = @import("./parser/parser.zig");
 
 const NodeType = parser.NodeType;
-const Node = parser.ASTNode;
+const Node = parser.Node;
 const TokenType = parser.TokenType;
 const Token = parser.Token;
 const Tokenizer = parser.Tokenizer;

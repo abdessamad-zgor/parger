@@ -1,23 +1,23 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const rulem = @import("./rule.zig");
-const nodem = @import("./node.zig");
-const symbolm = @import("./symbol.zig");
-const tokenm = @import("./token.zig");
-const lexemem = @import("./lexeme.zig");
-const grammerm = @import("./grammer.zig");
+pub const rulem = @import("./rule.zig");
+pub const nodem = @import("./node.zig");
+pub const symbolm = @import("./symbol.zig");
+pub const tokenm = @import("./token.zig");
+pub const lexemem = @import("./lexeme.zig");
+pub const grammerm = @import("./grammer.zig");
 
-const Rule = rulem.Rule;
-const NodeType = nodem.NodeType;
-const Node = nodem.Node;
-const SymbolType = symbolm.SymbolType;
-const Symbol = symbolm.Symbol;
-const TokenType = tokenm.Token;
-const Token = tokenm.Token;
-const Lexeme = lexemem.Lexeme;
-const Tokenizer = tokenm.Tokenizer;
-const Grammer = grammerm.Grammer;
+pub const Rule = rulem.Rule;
+pub const NodeType = nodem.NodeType;
+pub const Node = nodem.Node;
+pub const SymbolType = symbolm.SymbolType;
+pub const Symbol = symbolm.Symbol;
+pub const TokenType = tokenm.TokenType;
+pub const Token = tokenm.Token;
+pub const Lexeme = lexemem.Lexeme;
+pub const Tokenizer = tokenm.Tokenizer;
+pub const Grammer = grammerm.Grammer;
 
 const ParserState = enum {
     Init,
