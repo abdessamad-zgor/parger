@@ -59,6 +59,7 @@ pub const Pattern = struct {
         std.debug.print("lexeme index: {}\n", .{index});
         const char = lexeme.to_char();
         try self.stack.append(char);
+        //std.debug.print("pattern state: {}\n", .{self.state});
         self.state = if (lexeme == self.lexeme) switch (self.state) {
             .Init => blk: {
                 self.start = index;
@@ -77,6 +78,9 @@ pub const Pattern = struct {
                         break :iblk PatternState{ .Final = iq + 1 };
                     },
                     .one => iblk: {
+                        self.stack = std.ArrayList(u8).init(self.allocator);
+                        const _char = lexeme.to_char();
+                        try self.stack.append(_char);
                         self.start = index;
                         self.end = self.start + 1;
                         break :iblk PatternState{ .Final = 1 };

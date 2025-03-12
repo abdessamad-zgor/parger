@@ -21,10 +21,13 @@ pub const DefParser = struct {
     allocator: Allocator,
     parser: Parser,
 
-    fn init(allocator: Allocator) Self {
-        const tokenizer = Tokenizer.init(allocator, @constCast(&[_]Pattern{ Pattern.init(allocator, .RBrace, .rbrace, .one), Pattern.init(allocator, .LBrace, .lbrace, .one), Pattern.init(allocator, .Dot, .dot, .one), Pattern.init(allocator, .Comma, .comma, .one), Pattern.init(allocator, .Word, .literal, .any), Pattern.init(allocator, .Letter, .literal, .one), Pattern.init(allocator, .Dash, .dash, .one), Pattern.init(allocator, .Gt, .gt, .one), Pattern.init(allocator, .Lt, .lt, .one) }));
+    fn init(allocator: Allocator) !Self {
+        var patterns = std.ArrayList(Pattern).init(allocator);
+        try patterns.appendSlice(&[_]Pattern{ Pattern.init(allocator, .RBrace, .rbrace, .one), Pattern.init(allocator, .LBrace, .lbrace, .one), Pattern.init(allocator, .Dot, .dot, .one), Pattern.init(allocator, .Comma, .comma, .one), Pattern.init(allocator, .Word, .literal, .any), Pattern.init(allocator, .Letter, .literal, .one), Pattern.init(allocator, .Dash, .dash, .one), Pattern.init(allocator, .Gt, .gt, .one), Pattern.init(allocator, .Lt, .lt, .one) });
+        const tokenizer = Tokenizer.init(allocator, patterns.items);
 
-        const grammer = Grammer.init(allocator, .Def, &.{
+        var rules = std.ArrayList(Rule).init(allocator);
+        try rules.appendSlice(&.{
             Rule.init(.Required, &.{ .Lt, .Word, .Gt }),
             Rule.init(.RequiredVariadic, &.{ .Lt, .Word, .Dot, .Dot, .Dot, .Gt }),
             Rule.init(.Optional, &.{ .LBrace, .Word, .RBrace }),
@@ -64,6 +67,7 @@ pub const DefParser = struct {
             Rule.init(.ArgumentList, &.{}),
             Rule.init(.OptionDef, &.{ .Flag, .ArgumentList }),
         });
+        const grammer = Grammer.init(allocator, .Def, rules.items);
 
         const def_parser = Parser.init(allocator, grammer, tokenizer);
 
@@ -102,19 +106,20 @@ pub const DefParser = struct {
 
     fn parse(self: *Self, def_string: []u8) !Node {
         const lexemes = try self.lex(def_string);
-        const ast = try self.parser.parse(lexemes);
+        var _parser = self.parser;
+        const ast = try _parser.parse(lexemes);
         return ast;
     }
 };
 
 test "lex a def" {
-    var defParser = DefParser.init(std.heap.page_allocator);
+    var defParser = try DefParser.init(std.heap.page_allocator);
     const lexemes = try defParser.lex(@constCast("-d, --dick <size>"));
     std.debug.print("lexemes length: {}\n", .{lexemes.len});
 }
 
 test "parse a def" {
-    var defParser = DefParser.init(std.heap.page_allocator);
+    var defParser = try DefParser.init(std.heap.page_allocator);
     _ = try defParser.parse(@constCast("-d, --dick <size>"));
     //try std.testing.expect(@TypeOf(parse_tree) == Node);
 }
