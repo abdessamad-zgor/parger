@@ -36,34 +36,29 @@ pub const Pattern = struct {
     quantifier: Quantifier,
     state: PatternState,
     ttype: TokenType,
-    stack: ?std.ArrayList(u8),
-    allocator: ?Allocator,
+    stack: std.ArrayList(u8),
+    allocator: Allocator,
     start: usize,
     end: usize,
 
     // for this use case, tokens comprizing of one single type of lexeme are acceptable but subsequent implementation
     // need to replace lexeme with regular expression
-    pub fn init(allocator: ?Allocator, ttype: TokenType, lexeme: LexemeType, quantifier: Quantifier) Self {
-        var stack: ?std.ArrayList(u8) = null;
-        if (allocator) |_allocator| {
-            stack = std.ArrayList(u8).init(_allocator);
-        }
+    pub fn init(allocator: Allocator, ttype: TokenType, lexeme: LexemeType, quantifier: Quantifier) Self {
+        const stack = std.ArrayList(u8).init(allocator);
         return Pattern{ .stack = stack, .allocator = allocator, .lexeme = lexeme, .quantifier = quantifier, .ttype = ttype, .start = 0, .end = 0, .state = .Init };
     }
 
     pub fn reset(self: *Self) PatternState {
         self.start = 0;
         self.end = 0;
-        if (self.stack != null) {
-            self.stack = std.ArrayList(u8).init(self.allocator.?);
-        }
+        self.stack = std.ArrayList(u8).init(self.allocator);
         return .Init;
     }
 
     pub fn transition(self: *Self, lexeme: Lexeme, index: usize) !?Token {
-        if (self.stack != null) {
-            try self.stack.?.append(lexeme.to_char());
-        }
+        std.debug.print("lexeme index: {}\n", .{index});
+        const char = lexeme.to_char();
+        try self.stack.append(char);
         self.state = if (lexeme == self.lexeme) switch (self.state) {
             .Init => blk: {
                 self.start = index;
@@ -107,11 +102,11 @@ pub const Pattern = struct {
         } else self.reset();
 
         if (self.ttype == .Word) {
-            std.debug.print("step {}:\n\tstate = {}, stack = {s}, start = {}, end = {}\n", .{ index, self.state, self.stack.?.items, self.start, self.end });
+            std.debug.print("step {}:\n\tstate = {}, stack = {s}, start = {}, end = {}\n", .{ index, self.state, self.stack.items, self.start, self.end });
         }
 
         if (self.state == .Final) {
-            return if (self.stack != null) Token{ .ttype = self.ttype, .value = self.stack.?.items, .start = self.start, .end = self.end } else Token{ .ttype = self.ttype, .value = null, .start = self.start, .end = self.end };
+            return if (self.stack.items.len != 0) Token{ .ttype = self.ttype, .value = self.stack.items, .start = self.start, .end = self.end } else Token{ .ttype = self.ttype, .value = null, .start = self.start, .end = self.end };
         }
 
         return null;
@@ -125,7 +120,7 @@ test "Pattern test" {
         _ = try word_pattern.transition(lexeme, i);
         //try expect(word_pattern.start == 0);
         //try expect(word_pattern.end == 4);
-        //try expect(std.mem.eql(u8, @as([]const u8, token.?.value.?), "ziiig"));
+        //try expect(std.mem.eql(u8, @as([]const u8, token..value.), "ziiig"));
         //std.debug.print("start: {}, end: {} \n", .{ word_pattern.start, word_pattern.end });
     }
 }

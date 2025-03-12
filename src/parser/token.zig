@@ -166,7 +166,7 @@ test "TokenType test" {
 }
 
 test "Tokenizer test" {
-    var tokenizer = Tokenizer.init(std.heap.page_allocator, @constCast(&[_]Pattern{ Pattern.init(null, .RBrace, .rbrace, .one), Pattern.init(null, .LBrace, .lbrace, .one), Pattern.init(null, .Dot, .dot, .one), Pattern.init(null, .Comma, .comma, .one), Pattern.init(std.heap.page_allocator, .Word, .literal, .any), Pattern.init(null, .Letter, .literal, .one), Pattern.init(null, .Dash, .dash, .one), Pattern.init(null, .Gt, .gt, .one), Pattern.init(null, .Lt, .lt, .one) }));
+    var tokenizer = Tokenizer.init(std.heap.page_allocator, @constCast(&[_]Pattern{ Pattern.init(std.heap.page_allocator, .RBrace, .rbrace, .one), Pattern.init(std.heap.page_allocator, .LBrace, .lbrace, .one), Pattern.init(std.heap.page_allocator, .Dot, .dot, .one), Pattern.init(std.heap.page_allocator, .Comma, .comma, .one), Pattern.init(std.heap.page_allocator, .Word, .literal, .any), Pattern.init(std.heap.page_allocator, .Letter, .literal, .one), Pattern.init(std.heap.page_allocator, .Dash, .dash, .one), Pattern.init(std.heap.page_allocator, .Gt, .gt, .one), Pattern.init(std.heap.page_allocator, .Lt, .lt, .one) }));
     const lexemes = &[_]Lexeme{ .dash, .{ .literal = 'd' }, .comma, .space, .dash, .dash, .{ .literal = 'd' }, .{ .literal = 'i' }, .{ .literal = 'c' }, .{ .literal = 'k' }, .space, .lt, .{ .literal = 's' }, .{ .literal = 'i' }, .{ .literal = 'z' }, .{ .literal = 'e' }, .gt };
 
     const tokens = try tokenizer.tokenize(@constCast(lexemes));

@@ -2,12 +2,14 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 pub const rulem = @import("./rule.zig");
+pub const patternm = @import("./pattern.zig");
 pub const nodem = @import("./node.zig");
 pub const symbolm = @import("./symbol.zig");
 pub const tokenm = @import("./token.zig");
 pub const lexemem = @import("./lexeme.zig");
 pub const grammerm = @import("./grammer.zig");
 
+pub const Pattern = patternm.Pattern;
 pub const Rule = rulem.Rule;
 pub const NodeType = nodem.NodeType;
 pub const Node = nodem.Node;
