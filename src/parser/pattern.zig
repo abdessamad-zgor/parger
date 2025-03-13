@@ -56,7 +56,7 @@ pub const Pattern = struct {
     }
 
     pub fn transition(self: *Self, lexeme: Lexeme, index: usize) !?Token {
-        std.debug.print("lexeme index: {}\n", .{index});
+        //std.debug.print("lexeme index: {}\n", .{index});
         const char = lexeme.to_char();
         try self.stack.append(char);
         //std.debug.print("pattern state: {}\n", .{self.state});
@@ -105,9 +105,9 @@ pub const Pattern = struct {
             },
         } else self.reset();
 
-        if (self.ttype == .Word) {
-            std.debug.print("step {}:\n\tstate = {}, stack = {s}, start = {}, end = {}\n", .{ index, self.state, self.stack.items, self.start, self.end });
-        }
+        //if (self.ttype == .Word) {
+        //    std.debug.print("step {}:\n\tstate = {}, stack = {s}, start = {}, end = {}\n", .{ index, self.state, self.stack.items, self.start, self.end });
+        //}
 
         if (self.state == .Final) {
             return if (self.stack.items.len != 0) Token{ .ttype = self.ttype, .value = self.stack.items, .start = self.start, .end = self.end } else Token{ .ttype = self.ttype, .value = null, .start = self.start, .end = self.end };

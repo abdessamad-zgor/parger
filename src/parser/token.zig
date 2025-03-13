@@ -170,8 +170,8 @@ test "Tokenizer test" {
     const lexemes = &[_]Lexeme{ .dash, .{ .literal = 'd' }, .comma, .space, .dash, .dash, .{ .literal = 'd' }, .{ .literal = 'i' }, .{ .literal = 'c' }, .{ .literal = 'k' }, .space, .lt, .{ .literal = 's' }, .{ .literal = 'i' }, .{ .literal = 'z' }, .{ .literal = 'e' }, .gt };
 
     const tokens = try tokenizer.tokenize(@constCast(lexemes));
-    for (tokens) |token| {
-        std.debug.print("token = {}, value = {?s} \n", .{ token.ttype, token.value });
-    }
-    //try expect(tokens.len == 16);
+    //for (tokens) |token| {
+    //    std.debug.print("token = {}, value = {?s} \n", .{ token.ttype, token.value });
+    //}
+    try expect(tokens.len == 10);
 }

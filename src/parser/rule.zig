@@ -21,20 +21,20 @@ pub const Rule = struct {
         return Rule{ .ntype = ntype, .symbols = @constCast(symbols) };
     }
 
-    pub fn accept(self: Self, stack: []SymbolType) bool {
+    pub fn accept(self: Self, stack: []Symbol) bool {
         if (self.symbols.len != stack.len) {
             return false;
         }
         for (self.symbols, 0..) |symbol, i| {
-            if (!std.meta.eql(symbol, stack[i])) {
+            if (!std.meta.eql(symbol, stack[i].stype)) {
                 return false;
             }
         }
         return true;
     }
 
-    pub fn reduce(self: Self, allocator: Allocator, symbol_stack: []SymbolType, stack: []Symbol, index: usize) !Node {
-        if (!self.accept(symbol_stack)) {
+    pub fn reduce(self: Self, allocator: Allocator, stack: []Symbol, index: usize) !Node {
+        if (!self.accept(stack)) {
             return error.InvalidSymbolStack;
         }
         const tokens = blk: {

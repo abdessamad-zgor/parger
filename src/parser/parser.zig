@@ -50,27 +50,26 @@ pub const Parser = struct {
     pub fn parse(self: *Self, lexemes: []Lexeme) !Node {
         self.tokens = try self.tokenizer.tokenize(lexemes);
         var index: usize = 0;
-        while (self.state != .Accept or self.state != .Reject) : ({
+        while (index < self.tokens.len) : ({
             try self.shift(&index);
         }) {
             try self.reduce(index);
         } else {
-            if (self.state == .Accept) {
-                return self.stack.items[0].value.node;
-            } else {
-                return error.InvalidInput;
-            }
+            return self.stack.items[0].value.node;
         }
     }
 
     pub fn reduce(self: *Self, index: usize) !void {
-        var reducer_rule, var stack_index = self.grammer.accept(try self.symbols_stack());
+        var reducer_rule, var stack_index = self.grammer.accept(self.stack.items);
         while (reducer_rule != null) : ({
-            reducer_rule, stack_index = self.grammer.accept(try self.symbols_stack());
+            reducer_rule, stack_index = self.grammer.accept(self.stack.items);
         }) {
             if (reducer_rule) |rule| {
                 try self.step(index, rule);
-                try self.stack.insert(@intCast(stack_index), Symbol{ .stype = rule.ntype.to_symbol_type(), .value = .{ .node = try rule.reduce(self.allocator, (try self.symbols_stack())[@intCast(stack_index)..], self.stack.items[@intCast(stack_index)..], @intCast(stack_index)) } });
+                const rule_stack = self.stack.items[@intCast(stack_index)..];
+                std.debug.print("stack: {}, rule: {}, index: {}\n", .{ rule_stack.len, rule.ntype, stack_index });
+                const reduced_node = try rule.reduce(self.allocator, @constCast(rule_stack), @intCast(stack_index));
+                try self.stack.insert(@intCast(stack_index), Symbol{ .stype = rule.ntype.to_symbol_type(), .value = .{ .node = reduced_node } });
                 self.stack.shrinkAndFree(@intCast(stack_index + 1));
             }
         }

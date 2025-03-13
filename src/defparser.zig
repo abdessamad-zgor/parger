@@ -120,6 +120,9 @@ test "lex a def" {
 
 test "parse a def" {
     var defParser = try DefParser.init(std.heap.page_allocator);
-    _ = try defParser.parse(@constCast("-d, --dick <size>"));
-    //try std.testing.expect(@TypeOf(parse_tree) == Node);
+    const parse_tree = try defParser.parse(@constCast("-d, --dick <size>"));
+    try std.testing.expect(@TypeOf(parse_tree) == Node);
+    std.debug.print("parses stack length: {}\n", .{defParser.parser.stack.items.len});
+    try std.testing.expect(defParser.parser.stack.items.len == 1);
+    std.debug.print("parse tree: {any}\n", .{parse_tree});
 }
