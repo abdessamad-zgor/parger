@@ -55,6 +55,7 @@ pub const Parser = struct {
         }) {
             try self.reduce(index);
         } else {
+            std.debug.print("parser stack length: {}\n", .{self.stack.items.len});
             return self.stack.items[0].value.node;
         }
     }
@@ -67,10 +68,10 @@ pub const Parser = struct {
             if (reducer_rule) |rule| {
                 try self.step(index, rule);
                 const rule_stack = self.stack.items[@intCast(stack_index)..];
-                std.debug.print("stack: {}, rule: {}, index: {}\n", .{ rule_stack.len, rule.ntype, stack_index });
+                std.debug.print("stack: {}, rule: {}, index: {}\n", .{ self.stack, rule.ntype, stack_index });
                 const reduced_node = try rule.reduce(self.allocator, @constCast(rule_stack), @intCast(stack_index));
-                try self.stack.insert(@intCast(stack_index), Symbol{ .stype = rule.ntype.to_symbol_type(), .value = .{ .node = reduced_node } });
-                self.stack.shrinkAndFree(@intCast(stack_index + 1));
+                self.stack.shrinkAndFree(@intCast(stack_index));
+                try self.stack.append(Symbol{ .stype = rule.ntype.to_symbol_type(), .value = .{ .node = reduced_node } });
             }
         }
     }

@@ -52,20 +52,13 @@ pub const DefParser = struct {
                 .Dash,
                 .Word,
             }),
-            Rule.init(.Flag, &.{
-                .ShortFlag,
-            }),
-            Rule.init(.Flag, &.{
-                .LongFlag,
-            }),
-            Rule.init(.Flag, &.{ .ShortFlag, .Comma, .LongFlag }),
+            Rule.init(.FullFlag, &.{ .ShortFlag, .Comma, .LongFlag }),
             Rule.init(.ArgumentList, &.{.Argument}),
-            Rule.init(.ArgumentList, &.{
-                .Argument,
-                .ArgumentList,
-            }),
+            Rule.init(.ArgumentList, &.{ .Argument, .ArgumentList }),
             Rule.init(.ArgumentList, &.{}),
             Rule.init(.OptionDef, &.{ .Flag, .ArgumentList }),
+            Rule.init(.CommandDef, &.{ .Word, .ArgumentList }),
+            Rule.init(.Def, &.{ .OptionDef, .CommandDef }),
         });
         const grammer = Grammer.init(allocator, .Def, rules.items);
 
@@ -122,7 +115,7 @@ test "parse a def" {
     var defParser = try DefParser.init(std.heap.page_allocator);
     const parse_tree = try defParser.parse(@constCast("-d, --dick <size>"));
     try std.testing.expect(@TypeOf(parse_tree) == Node);
-    std.debug.print("parses stack length: {}\n", .{defParser.parser.stack.items.len});
+    std.debug.print("parser stack : {any}\n", .{defParser.parser.stack.items});
     try std.testing.expect(defParser.parser.stack.items.len == 1);
     std.debug.print("parse tree: {any}\n", .{parse_tree});
 }
