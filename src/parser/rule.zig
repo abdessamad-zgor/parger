@@ -15,28 +15,17 @@ const Symbol = symbolm.Symbol;
 pub const Rule = struct {
     const Self = @This();
     ntype: NodeType,
-    symbols: []SymbolType,
+    variants: [][]SymbolType,
 
-    pub fn init(ntype: NodeType, symbols: []const SymbolType) Self {
-        return Rule{ .ntype = ntype, .symbols = @constCast(symbols) };
+    pub fn init(ntype: NodeType, symbols: [][]SymbolType) Self {
+        return Rule{ .ntype = ntype, .variants = @constCast(symbols) };
     }
 
-    pub fn accept(self: Self, stack: []Symbol) bool {
-        if (self.symbols.len != stack.len) {
-            return false;
-        }
-        for (self.symbols, 0..) |symbol, i| {
-            if (!std.meta.eql(symbol, stack[i].stype)) {
-                return false;
-            }
-        }
-        return true;
+    pub fn accepts(self: Self, stack: []SymbolType) ParserState {
+
     }
 
     pub fn reduce(self: Self, allocator: Allocator, stack: []Symbol, index: usize) !Node {
-        if (!self.accept(stack)) {
-            return error.InvalidSymbolStack;
-        }
         const tokens = blk: {
             var tokens_arr = std.ArrayList(Token).init(allocator);
             for (stack) |symbol| {
