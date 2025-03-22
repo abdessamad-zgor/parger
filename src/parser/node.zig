@@ -16,7 +16,7 @@ pub const NodeType = enum {
     Argument,
     ShortFlag,
     LongFlag,
-    FullFlag,
+    Flag,
     ArgumentList,
     CommandDef,
     OptionDef,

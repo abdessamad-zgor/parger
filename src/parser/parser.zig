@@ -9,7 +9,7 @@ pub const tokenm = @import("./token.zig");
 pub const lexemem = @import("./lexeme.zig");
 pub const grammerm = @import("./grammer.zig");
 
-pub const Pattern = patternm.Pattern;
+pub const Quantifier = patternm.Quantifier;
 pub const Rule = rulem.Rule;
 pub const NodeType = nodem.NodeType;
 pub const Node = nodem.Node;
@@ -17,6 +17,7 @@ pub const SymbolType = symbolm.SymbolType;
 pub const Symbol = symbolm.Symbol;
 pub const TokenType = tokenm.TokenType;
 pub const Token = tokenm.Token;
+pub const LexemeType = lexemem.LexemeType;
 pub const Lexeme = lexemem.Lexeme;
 pub const Tokenizer = tokenm.Tokenizer;
 pub const Grammer = grammerm.Grammer;
@@ -28,10 +29,18 @@ const ParserState = enum {
     Reject,
 };
 
-const ParseStep = struct { index: usize, step: union(enum) {
-    shift: void,
-    reduce: struct { rule: Rule, variant: usize, stack: []SymbolType, stack_index: usize },
-} };
+const ParseStep = struct {
+    index: usize,
+    step: union(enum) {
+        shift: void,
+        reduce: struct {
+            rule: Rule,
+            variant: usize,
+            stack: []SymbolType,
+            stack_index: usize,
+        },
+    },
+};
 
 pub const Parser = struct {
     const Self = @This();
@@ -58,14 +67,12 @@ pub const Parser = struct {
         //    std.debug.print("parser stack length: {}\n", .{self.stack.items.len});
         //    return self.stack.items[0].value.node;
         //}
-        
-
 
         self.tokens = try self.tokenizer.tokenize(lexemes);
         while (self.current_index < self.tokens.len) {
             const lookahead = self.tokens[self.current_index];
-            if(self.reduce()) |reduce_result| {
-                
+            if (self.reduce()) |reduce_result| {
+                _ = reduce_result;
             } else {
                 self.shift();
             }
@@ -73,7 +80,8 @@ pub const Parser = struct {
         }
     }
 
-    pub fn reduce(self: *Self) !struct {?Rule, usize} {
+    pub fn reduce(self: *Self) !struct { ?Rule, usize } {
+        _ = self;
         //var reducer_rule, var stack_index = self.grammer.accept(self.stack.items);
         //while (reducer_rule != null) : ({
         //    reducer_rule, stack_index = self.grammer.accept(self.stack.items);
@@ -92,6 +100,7 @@ pub const Parser = struct {
         //const current_token = self.tokens[index.*];
         //try self.stack.append(Symbol{ .stype = TokenType.to_symbol_type(current_token.ttype), .value = .{ .token = current_token } });
         //index.* += 1;
+        self.current_index += 1;
     }
 
     //pub fn symbols_stack(self: Self) ![]SymbolType {

@@ -12,17 +12,34 @@ const Node = nodem.Node;
 const SymbolType = symbolm.SymbolType;
 const Symbol = symbolm.Symbol;
 
+const ParserState = enum {
+    Init,
+    Intrem,
+    Accept,
+    Reject,
+};
+
 pub const Rule = struct {
     const Self = @This();
     ntype: NodeType,
     variants: [][]SymbolType,
 
-    pub fn init(ntype: NodeType, symbols: [][]SymbolType) Self {
-        return Rule{ .ntype = ntype, .variants = @constCast(symbols) };
+    pub fn init(ntype: NodeType, symbols: []const []const SymbolType) Self {
+        return Rule{ .ntype = ntype, .variants = symbols };
     }
 
-    pub fn accepts(self: Self, stack: []SymbolType) ParserState {
-
+    pub fn accepts(self: Self, stack: []SymbolType) ![]struct { usize, ParserState } {
+        var parser_states = std.ArrayList(struct { usize, ParserState }).init(std.heap.page_allocator);
+        outer: for (self.variants, 0..) |variant, i| {
+            for (stack, 0..) |stack_symbol, j| {
+                if (stack_symbol != variant[j]) {
+                    try parser_states.append(struct { i, .Reject });
+                    continue :outer;
+                }
+                try parser_states.append(struct { i, if (variant.len == stack.len) .Accept else .Intrem });
+            }
+        }
+        return parser_states.items;
     }
 
     pub fn reduce(self: Self, allocator: Allocator, stack: []Symbol, index: usize) !Node {

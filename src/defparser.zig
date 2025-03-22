@@ -10,8 +10,10 @@ const Tokenizer = parser.Tokenizer;
 const Lexeme = parser.Lexeme;
 const LexemeType = parser.LexemeType;
 const StateType = parser.StateType;
+const Quantifier = parser.Quantifier;
 const Pattern = parser.Pattern;
 const Rule = parser.Rule;
+const SymbolType = parser.SymbolType;
 const Symbol = parser.Symbol;
 const Grammer = parser.Grammer;
 const Parser = parser.Parser;
@@ -22,45 +24,103 @@ pub const DefParser = struct {
     parser: Parser,
 
     fn init(allocator: Allocator) !Self {
-        var patterns = std.ArrayList(Pattern).init(allocator);
-        try patterns.appendSlice(&[_]Pattern{ Pattern.init(allocator, .RBrace, .rbrace, .one), Pattern.init(allocator, .LBrace, .lbrace, .one), Pattern.init(allocator, .Dot, .dot, .one), Pattern.init(allocator, .Comma, .comma, .one), Pattern.init(allocator, .Word, .literal, .any), Pattern.init(allocator, .Letter, .literal, .one), Pattern.init(allocator, .Dash, .dash, .one), Pattern.init(allocator, .Gt, .gt, .one), Pattern.init(allocator, .Lt, .lt, .one) });
-        const tokenizer = Tokenizer.init(allocator, patterns.items);
-
-        var rules = std.ArrayList(Rule).init(allocator);
-        try rules.appendSlice(&.{
-            Rule.init(.Required, &.{ .Lt, .Word, .Gt }),
-            Rule.init(.RequiredVariadic, &.{ .Lt, .Word, .Dot, .Dot, .Dot, .Gt }),
-            Rule.init(.Optional, &.{ .LBrace, .Word, .RBrace }),
-            Rule.init(.OptionalVariadic, &.{
-                .LBrace,
-                .Word,
-                .Dot,
-                .Dot,
-                .Dot,
-                .RBrace,
-            }),
-            Rule.init(.Variadic, &.{.OptionalVariadic}),
-            Rule.init(.Variadic, &.{.RequiredVariadic}),
-            Rule.init(.Argument, &.{
-                .Required,
-            }),
-            Rule.init(.Argument, &.{.Optional}),
-            Rule.init(.Argument, &.{.Variadic}),
-            Rule.init(.ShortFlag, &.{ .Dash, .Letter }),
-            Rule.init(.LongFlag, &.{
-                .Dash,
-                .Dash,
-                .Word,
-            }),
-            Rule.init(.FullFlag, &.{ .ShortFlag, .Comma, .LongFlag }),
-            Rule.init(.ArgumentList, &.{.Argument}),
-            Rule.init(.ArgumentList, &.{ .Argument, .ArgumentList }),
-            Rule.init(.ArgumentList, &.{}),
-            Rule.init(.OptionDef, &.{ .Flag, .ArgumentList }),
-            Rule.init(.CommandDef, &.{ .Word, .ArgumentList }),
-            Rule.init(.Def, &.{ .OptionDef, .CommandDef }),
+        var patterns = std.ArrayList(struct { TokenType, LexemeType, Quantifier }).init(allocator);
+        try patterns.appendSlice(&.{
+            .{ .RBrace, .rbrace, .one },
+            .{ .LBrace, .lbrace, .one },
+            .{ .Dot, .dot, .one },
+            .{ .Comma, .comma, .one },
+            .{ .Word, .literal, .any },
+            .{ .Letter, .literal, .one },
+            .{ .Dash, .dash, .one },
+            .{ .Gt, .gt, .one },
+            .{ .Lt, .lt, .one },
         });
-        const grammer = Grammer.init(allocator, .Def, rules.items);
+        const tokenizer = try Tokenizer.init(allocator, patterns.items);
+
+        var rules = std.ArrayList(struct { NodeType, []const []const SymbolType }).init(allocator);
+        try rules.appendSlice(&.{
+            .{
+                .Required,
+                &.{
+                    &.{ .Lt, .Word, .Gt },
+                },
+            },
+            .{
+                .RequiredVariadic, &.{
+                    &.{ .Lt, .Word, .Dot, .Dot, .Dot, .Gt },
+                },
+            },
+            .{
+                .Optional,
+                &.{
+                    &.{ .LBrace, .Word, .RBrace },
+                },
+            },
+            .{
+                .OptionalVariadic, &.{
+                    &.{ .LBrace, .Word, .Dot, .Dot, .Dot, .RBrace },
+                },
+            },
+            .{
+                .Variadic, &.{
+                    &.{.OptionalVariadic},
+                    &.{.RequiredVariadic},
+                },
+            },
+            .{
+                .Argument, &.{
+                    &.{.Required},
+                    &.{.Optional},
+                    &.{.Variadic},
+                },
+            },
+            .{
+                .ShortFlag,
+                &.{
+                    &.{ .Dash, .Letter },
+                },
+            },
+            .{
+                .LongFlag,
+                &.{
+                    &.{ .Dash, .Dash, .Word },
+                },
+            },
+            .{
+                .Flag, &.{
+                    &.{ .ShortFlag, .Comma, .LongFlag },
+                    &.{.LongFlag},
+                    &.{.ShortFlag},
+                },
+            },
+            .{
+                .ArgumentList, &.{
+                    &.{.Argument},
+                    &.{ .Argument, .ArgumentList },
+                    &.{},
+                },
+            },
+            .{
+                .OptionDef,
+                &.{
+                    &.{ .Flag, .ArgumentList },
+                },
+            },
+            .{
+                .CommandDef, &.{
+                    &.{ .Word, .ArgumentList },
+                },
+            },
+            .{
+                .Def,
+                &.{
+                    &.{.OptionDef},
+                    &.{.CommandDef},
+                },
+            },
+        });
+        const grammer = try Grammer.init(allocator, .Def, rules.items);
 
         const def_parser = Parser.init(allocator, grammer, tokenizer);
 

@@ -16,8 +16,12 @@ pub const Grammer = struct {
     rules: []Rule,
     entry_point: NodeType,
 
-    pub fn init(allocator: Allocator, entry_point: NodeType, rules: []const Rule) Self {
-        return Grammer{ .allocator = allocator, .entry_point = entry_point, .rules = @constCast(rules) };
+    pub fn init(allocator: Allocator, entry_point: NodeType, rules: []struct { NodeType, []const []const SymbolType }) !Self {
+        var _rules = std.ArrayList(Rule).init(allocator);
+        for (rules) |rule| {
+            try _rules.append(Rule.init(rule[0], rule[1]));
+        }
+        return Grammer{ .allocator = allocator, .entry_point = entry_point, .rules = _rules.items };
     }
 
     pub fn reduce(self: Self, symbols: []Symbol) !struct { ?Rule, usize } {

@@ -9,6 +9,8 @@ const lexemem = @import("./lexeme.zig");
 const SymbolType = symbolm.SymbolType;
 const Symbol = symbolm.Symbol;
 const Pattern = patternm.Pattern;
+const Quantifier = patternm.Quantifier;
+const LexemeType = lexemem.LexemeType;
 const Lexeme = lexemem.Lexeme;
 
 pub const TokenType = enum {
@@ -89,8 +91,12 @@ pub const Tokenizer = struct {
     allocator: Allocator,
 
     // this needs to verify for duplicates
-    pub fn init(allocator: Allocator, patterns: []Pattern) Self {
-        return Tokenizer{ .allocator = allocator, .patterns = patterns };
+    pub fn init(allocator: Allocator, patterns: []const struct { TokenType, LexemeType, Quantifier }) !Self {
+        var _patterns = std.ArrayList(Pattern).init(allocator);
+        for (patterns) |pattern| {
+            try _patterns.append(Pattern.init(allocator, pattern[0], pattern[1], pattern[2]));
+        }
+        return Tokenizer{ .allocator = allocator, .patterns = _patterns.items };
     }
 
     pub fn deinit(self: Self) void {
@@ -166,8 +172,36 @@ test "TokenType test" {
 }
 
 test "Tokenizer test" {
-    var tokenizer = Tokenizer.init(std.heap.page_allocator, @constCast(&[_]Pattern{ Pattern.init(std.heap.page_allocator, .RBrace, .rbrace, .one), Pattern.init(std.heap.page_allocator, .LBrace, .lbrace, .one), Pattern.init(std.heap.page_allocator, .Dot, .dot, .one), Pattern.init(std.heap.page_allocator, .Comma, .comma, .one), Pattern.init(std.heap.page_allocator, .Word, .literal, .any), Pattern.init(std.heap.page_allocator, .Letter, .literal, .one), Pattern.init(std.heap.page_allocator, .Dash, .dash, .one), Pattern.init(std.heap.page_allocator, .Gt, .gt, .one), Pattern.init(std.heap.page_allocator, .Lt, .lt, .one) }));
-    const lexemes = &[_]Lexeme{ .dash, .{ .literal = 'd' }, .comma, .space, .dash, .dash, .{ .literal = 'd' }, .{ .literal = 'i' }, .{ .literal = 'c' }, .{ .literal = 'k' }, .space, .lt, .{ .literal = 's' }, .{ .literal = 'i' }, .{ .literal = 'z' }, .{ .literal = 'e' }, .gt };
+    var tokenizer = try Tokenizer.init(std.heap.page_allocator, &.{
+        .{ .RBrace, .rbrace, .one },
+        .{ .LBrace, .lbrace, .one },
+        .{ .Dot, .dot, .one },
+        .{ .Comma, .comma, .one },
+        .{ .Word, .literal, .any },
+        .{ .Letter, .literal, .one },
+        .{ .Dash, .dash, .one },
+        .{ .Gt, .gt, .one },
+        .{ .Lt, .lt, .one },
+    });
+    const lexemes = &[_]Lexeme{
+        .dash,
+        .{ .literal = 'd' },
+        .comma,
+        .space,
+        .dash,
+        .dash,
+        .{ .literal = 'd' },
+        .{ .literal = 'i' },
+        .{ .literal = 'c' },
+        .{ .literal = 'k' },
+        .space,
+        .lt,
+        .{ .literal = 's' },
+        .{ .literal = 'i' },
+        .{ .literal = 'z' },
+        .{ .literal = 'e' },
+        .gt,
+    };
 
     const tokens = try tokenizer.tokenize(@constCast(lexemes));
     //for (tokens) |token| {
